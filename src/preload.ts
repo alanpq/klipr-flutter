@@ -1,3 +1,6 @@
+import {contextBridge, ipcRenderer} from 'electron'; 
+import * as path from 'path';
+
 // All of the Node.js APIs are available in the preload process.
 // It has the same sandbox as a Chrome extension.
 window.addEventListener("DOMContentLoaded", () => {
@@ -12,3 +15,15 @@ window.addEventListener("DOMContentLoaded", () => {
     replaceText(`${type}-version`, process.versions[type as keyof NodeJS.ProcessVersions]);
   }
 });
+
+contextBridge.exposeInMainWorld('electron', {
+  startDrag: (fileName: string) => {
+    ipcRenderer.send('ondragstart', path.join(process.cwd(), fileName))
+  }
+})
+
+contextBridge.exposeInMainWorld('videoAPI', {
+  openVideo: (fileName: string) => {
+    
+  }
+})

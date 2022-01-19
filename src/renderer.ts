@@ -4,3 +4,18 @@
 // nodeIntegration is set to true in webPreferences.
 // Use preload.js to selectively enable features
 // needed in the renderer process.
+
+const dom = {
+  file: document.getElementById("file") as HTMLInputElement,
+  playback: document.getElementById("playback") as HTMLVideoElement,
+};
+
+dom.file.addEventListener("change", (e: Event) => {
+  console.log(`Playing file '${dom.file.value}'...`)
+  dom.playback.src = URL.createObjectURL(dom.file.files[0]);
+  dom.playback.play();
+})
+
+// window.addEventListener("load", () => {
+
+// });
