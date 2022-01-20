@@ -9,7 +9,10 @@ class Timeline extends StatefulWidget {
   final OnScrubFunc? onScrub;
   final OnChangeRegionFunc? onChangeRegion;
 
-  const Timeline({Key? key, this.onScrub, this.onChangeRegion})
+  final double externTime;
+
+  const Timeline(
+      {Key? key, required this.externTime, this.onScrub, this.onChangeRegion})
       : super(key: key);
 
   @override
@@ -34,6 +37,15 @@ class _TimelineState extends State<Timeline> {
       curPos = curPosOffset / _timelineKey.currentContext!.size!.width;
       curPosOffset -= 5;
     });
+    if (widget.onScrub != null) {
+      widget.onScrub!(curPos);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    curPos = widget.externTime;
   }
 
   @override
@@ -62,18 +74,18 @@ class _TimelineState extends State<Timeline> {
                       widget.onChangeRegion!(start, end);
                     }
                   }, onScrub: (time) {
-                    setState(() {
-                      curPos = time;
-                      curPosOffset =
-                          curPos * _timelineKey.currentContext!.size!.width - 5;
-                    });
+                    // setState(() {
+                    //   curPos = time;
+                    //   curPosOffset =
+                    //       curPos * _timelineKey.currentContext!.size!.width - 5;
+                    // });
                     if (widget.onScrub != null) {
                       widget.onScrub!(time);
                     }
                   }),
-                  Transform.translate(
-                    offset: Offset(curPosOffset, 0),
-                    child: ticker,
+                  FractionallySizedBox(
+                    widthFactor: widget.externTime.clamp(0, 1),
+                    child: Align(alignment: Alignment.topRight, child: ticker),
                   ),
                 ],
               ),

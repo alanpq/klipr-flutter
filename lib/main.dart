@@ -41,6 +41,7 @@ class _MainState extends State<Main> {
   final Player _player = Player(id: 1234);
 
   Offset? offset;
+  double _time = 0.0;
 
   Widget dropOrVideo(BuildContext context) {
     var drop = DropTarget(
@@ -48,7 +49,6 @@ class _MainState extends State<Main> {
           if (details.files.isEmpty) return;
           file = details.files.first;
           _player.open(Media.file(File(details.files.first.path)));
-          debugPrint('dragDone');
         },
         onDragUpdated: (details) {
           setState(() {
@@ -92,11 +92,38 @@ class _MainState extends State<Main> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _player.positionStream.listen((PositionState state) {
+      setState(() {
+        _time = state.position!.inMicroseconds.toDouble() /
+            state.duration!.inMicroseconds.toDouble();
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Expanded(flex: 2, child: dropOrVideo(context)),
-        const Expanded(flex: 1, child: Timeline())
+        Expanded(
+            flex: 1,
+            child: Timeline(
+              externTime: _time,
+              onScrub: (time) {
+                setState(() {
+                  _time = time;
+                });
+                _player.seek(Duration(
+                    microseconds:
+                        (_player.position.duration!.inMicroseconds * time)
+                            .toInt()));
+                if (!_player.playback.isPlaying) {
+                  _player.play();
+                }
+              },
+            ))
       ],
     );
   }
