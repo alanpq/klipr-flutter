@@ -26,8 +26,8 @@ const loadVideo = (file: File) => {
   dom.videoText.style.visibility = 'hidden';
 }
 
-const showDropZone = () => {dom.dropZone.style.visibility = "visible"};
-const hideDropZone = () => {dom.dropZone.style.visibility = "hidden"};
+const showDropZone = () => {dom.dropZone.style.visibility = "visible";};
+const hideDropZone = () => {dom.dropZone.style.visibility = "hidden";};
 
 const handleDrop = (e: DragEvent) => {
   e.preventDefault();
@@ -36,14 +36,12 @@ const handleDrop = (e: DragEvent) => {
   hideDropZone();
 }
 const allowDrag = (e: DragEvent) => {
-  if (true) {
-    e.dataTransfer.dropEffect = "copy";
-    e.preventDefault();
-  }
+  if (e.dataTransfer.types.length != 1 || e.dataTransfer.types[0] != 'Files') return;
+  e.dataTransfer.dropEffect = "copy";
+  e.preventDefault();
 }
 
 window.addEventListener('dragenter', showDropZone);
-
 dom.dropZone.addEventListener('dragenter', allowDrag);
 dom.dropZone.addEventListener('dragover', allowDrag);
 dom.dropZone.addEventListener('dragleave', hideDropZone);

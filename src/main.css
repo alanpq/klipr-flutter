@@ -4,6 +4,11 @@
   --fg: #fff;
 }
 
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -35,6 +40,7 @@ section#video {
 
 section#timeline {
   grid-area: timeline;
+  padding: 10px;
 }
 
 section#sidebar {
@@ -54,7 +60,6 @@ section#video > section {
 }
 
 video {
-  z-index: 100;
   max-width: 100%;
   max-height: 100%;
 }
@@ -66,5 +71,62 @@ video {
   right: 0;
   bottom: 0;
   left: 0;
+  z-index: 1000;
   background-color: grey;
+}
+
+
+#time {
+  position: relative;
+  height: 3.5em;
+  width: calc(100% - 20px);
+
+  margin: 1em 10px 0 10px;
+
+  background: rgb(87, 87, 87);
+  cursor: pointer;
+}
+
+#time > .cursor {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 0;
+  border: 1px solid white;
+  border-radius: 2px;
+}
+
+#time > .region {
+  width: 200px;
+
+  height: 100%;
+
+  border: 1px solid rgb(66, 235, 206);
+  border-left: none;
+  border-right: none;
+
+  background: rgb(28, 42, 53);
+}
+
+#time > .region > div:where(.a, .b) {
+  display: inline-block;
+  width: 10px;
+  height: 3.5em;
+
+  border: 2px solid rgb(66, 235, 206);
+  border-radius: 6px 0 0 6px;
+
+  background:rgb(66, 235, 206);
+
+  margin-top: -1px;
+  margin-left: -10px;
+
+  cursor: ew-resize;
+}
+
+#time > .region > div.b {
+  float: right;
+  border-radius: 0 6px 6px 0;
+  margin-left: 0;
+  margin-right: -10px;
 }
