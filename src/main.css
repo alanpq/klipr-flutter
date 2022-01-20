@@ -130,3 +130,41 @@ video {
   margin-left: 0;
   margin-right: -10px;
 }
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+input[type=radio] {
+  display: none;
+}
+
+input[type=radio]+label {
+  display: inline-block;
+  padding: 5px 10px;
+
+  /* height: 1.5em; */
+  vertical-align: middle;
+
+  border-radius: 5px;
+  background-color: rgb(46, 90, 148);
+  color: white;
+
+  cursor: pointer;
+  transition: background-color 0.1s ease-in-out;
+}
+
+input[type=radio]+label:hover {
+  background-color: rgb(62, 114, 182);
+}
+
+input[type=radio]:checked + label {
+  background-color: rgb(29, 42, 78);
+}

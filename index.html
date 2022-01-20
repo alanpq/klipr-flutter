@@ -26,7 +26,28 @@
     </section>
     
     <section id="sidebar">
+      <form id="filesizeForm">
+        <fieldset>
+          <legend>Choose a filesize</legend>
+          <input type="radio" id="size_8" name="size" value="8" checked>
+          <label for="size_8">8 MB</label>
 
+          <input type="radio" id="size_50" name="size" value="50">
+          <label for="size_50">50 MB</label>
+
+          <input type="radio" id="size_100" name="size" value="100">
+          <label for="size_100">100 MB</label>
+
+          <section>
+            <input type="radio" id="size_other" name="size" value="other">
+            <label for="size_other">Other (MB)</label>
+
+            <input type="number" name="other_size" value="8" id="other_size" disabled>
+          </section>
+        </fieldset>
+      </form>
+      <button onclick="share()">Share</button>
+      <button onclick="save()">Save</button>
     </section>
     
     <section id="timeline">
@@ -51,5 +72,6 @@
     <!-- You can also require other files to run in this process -->
     <script src="./dist/renderer.js"></script>
     <script src="./dist/controls.js"></script>
+    <script src="./dist/export.js"></script>
   </body>
 </html>
