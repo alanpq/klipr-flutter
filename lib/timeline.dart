@@ -51,9 +51,9 @@ class _TimelineState extends State<Timeline> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 5),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
       child: SizedBox(
-        height: 100,
+        height: _height,
         child: MouseRegion(
             cursor: SystemMouseCursors.click,
             child: Listener(
@@ -69,23 +69,29 @@ class _TimelineState extends State<Timeline> {
                       color: Color(0xFF2B2B2C),
                     ),
                   ),
-                  _ClipRegion(onChangeRegion: (start, end) {
-                    if (widget.onChangeRegion != null) {
-                      widget.onChangeRegion!(start, end);
-                    }
-                  }, onScrub: (time) {
-                    // setState(() {
-                    //   curPos = time;
-                    //   curPosOffset =
-                    //       curPos * _timelineKey.currentContext!.size!.width - 5;
-                    // });
-                    if (widget.onScrub != null) {
-                      widget.onScrub!(time);
-                    }
-                  }),
+                  _ClipRegion(
+                      timelineKey: _timelineKey,
+                      onChangeRegion: (start, end) {
+                        if (widget.onChangeRegion != null) {
+                          widget.onChangeRegion!(start, end);
+                        }
+                      },
+                      onScrub: (time) {
+                        // setState(() {
+                        //   curPos = time;
+                        //   curPosOffset =
+                        //       curPos * _timelineKey.currentContext!.size!.width - 5;
+                        // });
+                        if (widget.onScrub != null) {
+                          widget.onScrub!(time);
+                        }
+                      }),
                   FractionallySizedBox(
                     widthFactor: widget.externTime.clamp(0, 1),
-                    child: Align(alignment: Alignment.topRight, child: ticker),
+                    child: Align(
+                        heightFactor: 1,
+                        alignment: Alignment.topRight,
+                        child: ticker),
                   ),
                 ],
               ),
@@ -110,7 +116,10 @@ class _ClipRegion extends StatefulWidget {
   final OnChangeRegionFunc? onChangeRegion;
   final OnScrubFunc? onScrub;
 
-  const _ClipRegion({Key? key, this.onChangeRegion, this.onScrub})
+  final GlobalKey timelineKey;
+
+  const _ClipRegion(
+      {Key? key, required this.timelineKey, this.onChangeRegion, this.onScrub})
       : super(key: key);
 
   @override
@@ -124,7 +133,7 @@ class _ClipRegionState extends State<_ClipRegion> {
   var _right = 30.0;
 
   var _start = 0.0;
-  var _end = 1.0;
+  var _end = 0.5;
 
   void _pointerUp(e) {
     _held = "";
@@ -139,18 +148,19 @@ class _ClipRegionState extends State<_ClipRegion> {
     return Listener(
       onPointerMove: (e) {
         if (_held == "") return;
+        var w = widget.timelineKey.currentContext!.size!.width;
         switch (_held) {
           case "start":
             setState(() {
               _left = _move(e, _left);
               if (_left + 10 > _right) {
                 _right = _left + 10;
-                _end = (_right / window.physicalSize.width).clamp(0, 1);
+                _end = (_right / w).clamp(0, 1);
               }
-              _start = (_left / window.physicalSize.width).clamp(0, 1);
+              _start = (_left / w).clamp(0, 1);
 
-              _left = _start * window.physicalSize.width;
-              _right = _end * window.physicalSize.width;
+              _left = _start * w;
+              _right = _end * w;
             });
             if (widget.onChangeRegion != null) {
               widget.onChangeRegion!(_start, _end);
@@ -163,13 +173,14 @@ class _ClipRegionState extends State<_ClipRegion> {
             setState(() {
               _right = _move(e, _right);
               if (_right - 10 < _left) {
-                _left = _right - 10;
-                _end = (_right / window.physicalSize.width).clamp(0, 1);
+                _left = (_right - 10).clamp(0, w);
+                _right = _left + 10;
+                _start = (_left / w).clamp(0, 1);
               }
-              _end = (_right / window.physicalSize.width).clamp(0, 1);
+              _end = (_right / w).clamp(0, 1);
 
-              _left = _start * window.physicalSize.width;
-              _right = _end * window.physicalSize.width;
+              _left = _start * w;
+              _right = _end * w;
             });
             if (widget.onChangeRegion != null) {
               widget.onChangeRegion!(_start, _end);

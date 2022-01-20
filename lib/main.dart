@@ -44,6 +44,9 @@ class _MainState extends State<Main> {
   Offset? offset;
   double _time = 0.0;
 
+  double _start = 0.0;
+  double _end = 1.0;
+
   Widget dropOrVideo(BuildContext context) {
     var drop = DropTarget(
         onDragDone: (details) async {
@@ -101,6 +104,9 @@ class _MainState extends State<Main> {
         _time = state.position!.inMicroseconds.toDouble() /
             state.duration!.inMicroseconds.toDouble();
       });
+      if (_time >= _end) {
+        _player.pause();
+      }
     });
   }
 
@@ -127,7 +133,14 @@ class _MainState extends State<Main> {
               _player.play();
             }
           },
+          onChangeRegion: (start, end) {
+            setState(() {
+              _start = start;
+              _end = end;
+            });
+          },
         ),
+        Text("start: $_start end: $_end"),
       ],
     );
   }
