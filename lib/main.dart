@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dart_vlc/dart_vlc.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
+import 'package:klipr/controls.dart';
 import 'package:klipr/sidebar.dart';
 import 'package:klipr/timeline.dart';
 import 'package:cross_file/cross_file.dart';
@@ -94,6 +95,7 @@ class _MainState extends State<Main> {
   @override
   void initState() {
     super.initState();
+    _player.setVolume(0.5);
     _player.positionStream.listen((PositionState state) {
       setState(() {
         _time = state.position!.inMicroseconds.toDouble() /
@@ -107,23 +109,25 @@ class _MainState extends State<Main> {
     return Column(
       children: [
         Expanded(flex: 2, child: dropOrVideo(context)),
-        Expanded(
-            flex: 1,
-            child: Timeline(
-              externTime: _time,
-              onScrub: (time) {
-                setState(() {
-                  _time = time;
-                });
-                _player.seek(Duration(
-                    microseconds:
-                        (_player.position.duration!.inMicroseconds * time)
-                            .toInt()));
-                if (!_player.playback.isPlaying) {
-                  _player.play();
-                }
-              },
-            ))
+        Controls(
+          onVolume: (volume) {
+            _player.setVolume(volume);
+          },
+        ),
+        Timeline(
+          externTime: _time,
+          onScrub: (time) {
+            setState(() {
+              _time = time;
+            });
+            _player.seek(Duration(
+                microseconds: (_player.position.duration!.inMicroseconds * time)
+                    .toInt()));
+            if (!_player.playback.isPlaying) {
+              _player.play();
+            }
+          },
+        ),
       ],
     );
   }
