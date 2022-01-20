@@ -22,5 +22,5 @@ const getSize = () => {
 init();
 
 document.getElementById("share").onclick = () => {
-  (<any>window).videoAPI.exportVideo(state.file, getSize());
+  // (<any>window).videoAPI.exportVideo(state.file, getSize());
 };

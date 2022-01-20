@@ -57,6 +57,7 @@ section#video > section {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 video {

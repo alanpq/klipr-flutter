@@ -5,17 +5,40 @@
 // Use preload.js to selectively enable features
 // needed in the renderer process.
 
+const { ipcRenderer } = require("electron");
+
 const dom = {
   playback: document.getElementById("playback") as HTMLVideoElement,
   dropZone: document.getElementById("dropZone"),
   videoText: document.querySelector("#video > section") as HTMLVideoElement,
 };
 
+controls.onPlay(() => {
+  if (dom.playback.paused) dom.playback.play();
+  else dom.playback.pause();
+});
+
+controls.onMute(() => {
+  dom.playback.muted = !dom.playback.muted;
+});
+
+controls.onVolume((volume) => {
+  dom.playback.volume = volume;
+});
+
+dom.playback.ontimeupdate = () => {
+  controls.updateTime(dom.playback.currentTime / dom.playback.duration);
+}
+
 const state: {
   file: File
 } = {
   file: null,
 }
+
+dom.videoText.addEventListener("click", () => {
+  ipcRenderer.invoke
+})
 
 
 const loadVideo = (file: File) => {

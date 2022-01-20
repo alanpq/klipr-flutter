@@ -1,3 +1,4 @@
+
 const getRegionDOM = () => {
   const parent = document.querySelector("#time > .region") as HTMLElement;
   return {
@@ -6,6 +7,7 @@ const getRegionDOM = () => {
     b: parent.lastElementChild,
   }
 }
+
 const controls = {
   play: document.getElementById("play"),
   mute: document.getElementById("mute"),
@@ -17,17 +19,48 @@ const controls = {
   region: getRegionDOM(),
 }
 
+const callbacks: {
+  mute: () => void,
+  play: () => void,
+  volume: (volume: number) => void,
+  seek: (time: number) => void,
+} = {
+  mute: null,
+  play: null,
+  volume: null,
+  seek: null,
+};
+
+export const onMute = (cb: () => void) => {
+  callbacks.mute = cb;
+}
+
+export const onPlay = (cb: () => void) => {
+  callbacks.play = cb;
+}
+
+export const onVolume = (cb: (volume: number) => void) => {
+  callbacks.volume = cb;
+}
+
+export const onSeek = (cb: (time: number) => void) => {
+  callbacks.seek = cb;
+}
+
+export const updateTime = (time: number) => {
+  controls.cursor.style.left = time * regionState.rect.width + 'px';
+}
+
 controls.play.onclick = () => {
-  if (dom.playback.paused) dom.playback.play();
-  else dom.playback.pause();
+  callbacks.play();
 }
 
 controls.mute.onclick = () => {
-  dom.playback.muted = !dom.playback.muted;
+  callbacks.mute();
 }
 
 controls.volume.onchange = (e) => {
-  dom.playback.volume = controls.volume.valueAsNumber / 100;
+  callbacks.volume(controls.volume.valueAsNumber / 100);
 }
 
 const regionState = {
@@ -84,9 +117,7 @@ const mouseMove = (e: MouseEvent) => {
     })()
     break;
   }
-
-  if(dom.playback.src != "")
-    dom.playback.currentTime = scaledX * dom.playback.duration;
+  callbacks.seek(scaledX)
 }
 
 const registerRegionEvents = (handle: Node, target: string) => {
@@ -98,7 +129,3 @@ registerRegionEvents(controls.timeline, "time");
 
 window.addEventListener("mousemove", mouseMove);
 window.addEventListener("mouseup", mouseUp);
-
-dom.playback.addEventListener("timeupdate", () => {
-  controls.cursor.style.left = (dom.playback.currentTime / dom.playback.duration) * regionState.rect.width + 'px';
-})
