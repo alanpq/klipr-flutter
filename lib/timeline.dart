@@ -6,7 +6,11 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 class Timeline extends StatefulWidget {
-  const Timeline({Key? key}) : super(key: key);
+  final OnScrubFunc? onScrub;
+  final OnChangeRegionFunc? onChangeRegion;
+
+  const Timeline({Key? key, this.onScrub, this.onChangeRegion})
+      : super(key: key);
 
   @override
   _TimelineState createState() => _TimelineState();
@@ -14,31 +18,68 @@ class Timeline extends StatefulWidget {
 
 const _height = 50.0;
 
+typedef OnScrubFunc = void Function(double time);
+typedef OnChangeRegionFunc = void Function(double start, double end);
+
 class _TimelineState extends State<Timeline> {
   var curPos = 0.0;
+  var curPosOffset = 0.0;
+
+  final _timelineKey = GlobalKey();
+
+  void _mouseUpdate(PointerEvent e) {
+    setState(() {
+      curPosOffset = (e.localPosition.dx - 0)
+          .clamp(0, _timelineKey.currentContext!.size!.width);
+      curPos = curPosOffset / _timelineKey.currentContext!.size!.width;
+      curPosOffset -= 5;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5),
-        child: SizedBox(
-          height: 100,
-          child: Stack(
-            children: [
-              Container(
-                height: _height,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2B2B2C),
-                ),
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      child: SizedBox(
+        height: 100,
+        child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Listener(
+              onPointerDown: _mouseUpdate,
+              onPointerUp: _mouseUpdate,
+              onPointerMove: _mouseUpdate,
+              child: Stack(
+                key: _timelineKey,
+                children: [
+                  Container(
+                    height: _height,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2B2B2C),
+                    ),
+                  ),
+                  _ClipRegion(onChangeRegion: (start, end) {
+                    if (widget.onChangeRegion != null) {
+                      widget.onChangeRegion!(start, end);
+                    }
+                  }, onScrub: (time) {
+                    setState(() {
+                      curPos = time;
+                      curPosOffset =
+                          curPos * _timelineKey.currentContext!.size!.width - 5;
+                    });
+                    if (widget.onScrub != null) {
+                      widget.onScrub!(time);
+                    }
+                  }),
+                  Transform.translate(
+                    offset: Offset(curPosOffset, 0),
+                    child: ticker,
+                  ),
+                ],
               ),
-              _ClipRegion(),
-              Transform.translate(
-                offset: Offset(curPos, 0),
-                child: ticker,
-              ),
-            ],
-          ),
-        ));
+            )),
+      ),
+    );
   }
 }
 
@@ -54,21 +95,27 @@ const green = Color(0xFF3AF13A);
 const radius = Radius.circular(5);
 
 class _ClipRegion extends StatefulWidget {
+  final OnChangeRegionFunc? onChangeRegion;
+  final OnScrubFunc? onScrub;
+
+  const _ClipRegion({Key? key, this.onChangeRegion, this.onScrub})
+      : super(key: key);
+
   @override
   _ClipRegionState createState() => _ClipRegionState();
 }
 
 class _ClipRegionState extends State<_ClipRegion> {
-  var held = "";
+  var _held = "";
 
-  var left = 0.0;
-  var right = 30.0;
+  var _left = 0.0;
+  var _right = 30.0;
 
-  var start = 0.0;
-  var end = 1.0;
+  var _start = 0.0;
+  var _end = 1.0;
 
   void _pointerUp(e) {
-    held = "";
+    _held = "";
   }
 
   double _move(PointerMoveEvent e, double value) {
@@ -79,47 +126,59 @@ class _ClipRegionState extends State<_ClipRegion> {
   Widget build(BuildContext context) {
     return Listener(
       onPointerMove: (e) {
-        if (held == "") return;
-        switch (held) {
+        if (_held == "") return;
+        switch (_held) {
           case "start":
             setState(() {
-              left = _move(e, left);
-              if (left + 10 > right) {
-                right = left + 10;
-                end = (right / window.physicalSize.width).clamp(0, 1);
+              _left = _move(e, _left);
+              if (_left + 10 > _right) {
+                _right = _left + 10;
+                _end = (_right / window.physicalSize.width).clamp(0, 1);
               }
-              start = (left / window.physicalSize.width).clamp(0, 1);
+              _start = (_left / window.physicalSize.width).clamp(0, 1);
 
-              left = start * window.physicalSize.width;
-              right = end * window.physicalSize.width;
+              _left = _start * window.physicalSize.width;
+              _right = _end * window.physicalSize.width;
             });
+            if (widget.onChangeRegion != null) {
+              widget.onChangeRegion!(_start, _end);
+            }
+            if (widget.onScrub != null) {
+              widget.onScrub!(_start);
+            }
             break;
           case "end":
             setState(() {
-              right = _move(e, right);
-              if (right - 10 < left) {
-                left = right - 10;
-                end = (right / window.physicalSize.width).clamp(0, 1);
+              _right = _move(e, _right);
+              if (_right - 10 < _left) {
+                _left = _right - 10;
+                _end = (_right / window.physicalSize.width).clamp(0, 1);
               }
-              end = (right / window.physicalSize.width).clamp(0, 1);
+              _end = (_right / window.physicalSize.width).clamp(0, 1);
 
-              left = start * window.physicalSize.width;
-              right = end * window.physicalSize.width;
+              _left = _start * window.physicalSize.width;
+              _right = _end * window.physicalSize.width;
             });
+            if (widget.onChangeRegion != null) {
+              widget.onChangeRegion!(_start, _end);
+            }
+            if (widget.onScrub != null) {
+              widget.onScrub!(_end);
+            }
             break;
         }
       },
       child: Padding(
-        padding: EdgeInsets.only(left: left),
+        padding: EdgeInsets.only(left: _left),
         child: SizedBox(
-          width: right - left,
+          width: _right - _left,
           child: Row(
             children: [
               MouseRegion(
                 cursor: SystemMouseCursors.resizeColumn,
                 child: Listener(
                   onPointerDown: (e) {
-                    held = "start";
+                    _held = "start";
                   },
                   onPointerUp: _pointerUp,
                   child: dragger(context, false),
@@ -130,7 +189,7 @@ class _ClipRegionState extends State<_ClipRegion> {
                   cursor: SystemMouseCursors.click,
                   child: Listener(
                     onPointerDown: (e) {
-                      held = "time";
+                      _held = "time";
                     },
                     onPointerUp: _pointerUp,
                     child: Container(
@@ -148,10 +207,10 @@ class _ClipRegionState extends State<_ClipRegion> {
                 cursor: SystemMouseCursors.resizeColumn,
                 child: Listener(
                   onPointerDown: (e) {
-                    held = "end";
+                    _held = "end";
                   },
                   onPointerUp: (e) {
-                    held = "";
+                    _held = "";
                   },
                   child: dragger(context, true),
                 ),
