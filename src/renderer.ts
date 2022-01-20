@@ -50,3 +50,6 @@ dom.dropZone.addEventListener('drop', handleDrop);
 // window.addEventListener("load", () => {
 
 // });
+
+
+// document.getElementById("export").onclick = window.videoAPI.

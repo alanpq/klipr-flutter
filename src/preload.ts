@@ -23,7 +23,7 @@ contextBridge.exposeInMainWorld('electron', {
 })
 
 contextBridge.exposeInMainWorld('videoAPI', {
-  openVideo: (fileName: string) => {
-    
+  exportVideo: (size: number, fileName: string) => {
+    ipcRenderer.send('videoExport', fileName, size)
   }
 })
