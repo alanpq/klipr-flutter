@@ -1,0 +1,70 @@
+:root {
+  --bg: #000;
+
+  --fg: #fff;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 3fr 1fr;
+  grid-template-areas: 
+    "video sidebar"
+    "timeline sidebar";
+}
+
+section#video {
+  grid-area: video;
+  position: relative;
+
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+section#timeline {
+  grid-area: timeline;
+}
+
+section#sidebar {
+  grid-area: sidebar;
+}
+
+section#video > section {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+video {
+  z-index: 100;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+#dropZone {
+  visibility: hidden;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: grey;
+}

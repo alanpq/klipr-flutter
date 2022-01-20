@@ -13,17 +13,37 @@
       http-equiv="X-Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; media-src blob: filesystem:;"
     />
+
+    <link rel="stylesheet" href="./src/main.css">
   </head>
   <body>
-    <h1>Hello World!</h1>
-    We are using Node.js <span id="node-version"></span>, Chromium
-    <span id="chrome-version"></span>, and Electron
-    <span id="electron-version"></span>.
 
-    <input id="file" type="file" />
-    <video id="playback"></video>
+    <section id="video">
+      <section>
+        <h2>Drag a video to edit</h2>
+      </section>
+      <video id="playback"></video>
+    </section>
+    
+    <section id="sidebar">
 
+    </section>
+    
+    <section id="timeline">
+      <section class="buttons">
+        <button id="play">Play/Pause</button>
+        <button id="mute">Mute</button>
+        <input id="volume" type="range" min="0" max="100" value="50">
+        <span class="grow"></span>
+        <span id="timestamp">00:00 / 00:00</span>
+      </section>
+      <section id="slider"></section>
+    </section>
+
+
+    <section id="dropZone"></section>
     <!-- You can also require other files to run in this process -->
     <script src="./dist/renderer.js"></script>
+    <script src="./dist/controls.js"></script>
   </body>
 </html>
