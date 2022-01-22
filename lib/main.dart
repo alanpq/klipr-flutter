@@ -47,6 +47,8 @@ class _MainState extends State<Main> {
   double _start = 0.0;
   double _end = 1.0;
 
+  bool _playAnyway = false;
+
   Widget dropOrVideo(BuildContext context) {
     var drop = DropTarget(
         onDragDone: (details) async {
@@ -104,7 +106,7 @@ class _MainState extends State<Main> {
         _time = state.position!.inMicroseconds.toDouble() /
             state.duration!.inMicroseconds.toDouble();
       });
-      if (_time >= _end) {
+      if (_time >= _end && !_playAnyway) {
         _player.pause();
       }
     });
@@ -125,6 +127,11 @@ class _MainState extends State<Main> {
           onScrub: (time) {
             setState(() {
               _time = time;
+              if (_time > _end) {
+                _playAnyway = true;
+              } else {
+                _playAnyway = false;
+              }
             });
             _player.seek(Duration(
                 microseconds: (_player.position.duration!.inMicroseconds * time)
@@ -140,7 +147,7 @@ class _MainState extends State<Main> {
             });
           },
         ),
-        Text("start: $_start end: $_end"),
+        Text("start: $_start end: $_end time: $_time"),
       ],
     );
   }
