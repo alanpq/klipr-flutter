@@ -32,10 +32,10 @@ class _TimelineState extends State<Timeline> {
 
   void _mouseUpdate(PointerEvent e) {
     setState(() {
-      curPosOffset = (e.localPosition.dx - 0)
-          .clamp(0, _timelineKey.currentContext!.size!.width);
-      curPos = curPosOffset / _timelineKey.currentContext!.size!.width;
-      curPosOffset -= 5;
+      var w = _timelineKey.currentContext!.size!.width;
+      curPos = (e.localPosition.dx / (w - 10)).clamp(0, 1);
+      curPosOffset = curPos * (w - 50);
+      // curPosOffset -= 5;
     });
     if (widget.onScrub != null) {
       widget.onScrub!(curPos);
@@ -55,18 +55,21 @@ class _TimelineState extends State<Timeline> {
       child: SizedBox(
         height: _height,
         child: MouseRegion(
+            key: _timelineKey,
             cursor: SystemMouseCursors.click,
             child: Listener(
               onPointerDown: _mouseUpdate,
               onPointerUp: _mouseUpdate,
               onPointerMove: _mouseUpdate,
               child: Stack(
-                key: _timelineKey,
                 children: [
-                  Container(
-                    height: _height,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF2B2B2C),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: Container(
+                      height: _height,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF2929FF),
+                      ),
                     ),
                   ),
                   _ClipRegion(
@@ -86,12 +89,15 @@ class _TimelineState extends State<Timeline> {
                           widget.onScrub!(time);
                         }
                       }),
-                  FractionallySizedBox(
-                    widthFactor: widget.externTime.clamp(0, 1),
-                    child: Align(
-                        heightFactor: 1,
-                        alignment: Alignment.topRight,
-                        child: ticker),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: FractionallySizedBox(
+                      widthFactor: widget.externTime.clamp(0, 1),
+                      child: Align(
+                          heightFactor: 1,
+                          alignment: Alignment.topRight,
+                          child: ticker),
+                    ),
                   ),
                 ],
               ),
@@ -103,7 +109,7 @@ class _TimelineState extends State<Timeline> {
 
 Widget ticker = IgnorePointer(
     child: Transform.translate(
-        offset: const Offset(5, 0),
+        offset: const Offset(-1, 0),
         child: Container(
             width: 2,
             height: _height,
