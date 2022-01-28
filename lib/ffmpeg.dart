@@ -1,13 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:process_run/shell.dart';
 
 import 'package:klipr/stream.dart';
+import 'package:path/path.dart';
 
 class FFmpeg extends ChangeNotifier {
   final _ffmpegOut = StreamController<List<int>>();
   final _ffmpegErr = StreamController<List<int>>();
+
+  late String _ffmpeg;
+  late String _ffprobe;
 
   int pass = 0;
   int frameCount = 0;
@@ -18,6 +23,16 @@ class FFmpeg extends ChangeNotifier {
   late Shell _shell;
 
   FFmpeg() {
+    var lib = join(File(Platform.resolvedExecutable).parent.path, "ffmpeg");
+    _ffmpeg = join(lib, "ffmpeg.exe");
+    _ffprobe = join(lib, "ffprobe.exe");
+
+    if (kDebugMode) {
+      print('Lib folder: $lib');
+      print("Found ffmpeg at '$_ffmpeg'");
+      print("Found ffprobe at '$_ffprobe'");
+    }
+
     streamLines(_ffmpegOut.stream).listen((line) {
       var split = line.split("=");
       if (split.length == 2) {
@@ -63,10 +78,10 @@ class FFmpeg extends ChangeNotifier {
         stderr: _ffmpegErr.sink);
   }
 
-  void countFrames(String file) {
-    _shell.run("""
+  void countFrames(String file) async {
+    await _shell.run("""
     echo|set /p="FRAMES:"
-    ffmpeg/ffprobe.exe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 $file
+    '$_ffprobe' -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 '${join(file)}'
     """);
   }
 
@@ -95,11 +110,11 @@ class FFmpeg extends ChangeNotifier {
     var videoBitrate = (size * 8192) / regionLen;
 
     var args =
-        "-hide_banner -progress - -nostats -y -i '$input' -ss $startS -to $endS -c:v libx264 -b:v ${videoBitrate - audioBitrate}k";
+        "-hide_banner -progress - -nostats -y -i '${join(input)}' -ss $startS -to $endS -c:v libx264 -b:v ${videoBitrate - audioBitrate}k";
     _shell.run(
       """
-      "ffmpeg/ffmpeg.exe" $args -pass 1 -vsync cfr -f null NULL
-      "ffmpeg/ffmpeg.exe" $args -pass 2 -c:a copy $output
+      '$_ffprobe' $args -pass 1 -vsync cfr -f null NULL
+      '$_ffprobe' $args -pass 2 -c:a copy '${join(output)}'
       """,
     );
 
