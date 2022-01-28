@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dart_vlc/dart_vlc.dart';
@@ -5,16 +6,51 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:klipr/controls.dart';
 import 'package:klipr/sidebar.dart';
+import 'package:klipr/stream.dart';
 import 'package:klipr/timeline.dart';
 import 'package:cross_file/cross_file.dart';
+import 'package:process_run/cmd_run.dart';
+import 'package:process_run/shell.dart';
 
 void main() {
   DartVLC.initialize();
   runApp(const App());
 }
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   const App({Key? key}) : super(key: key);
+
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  XFile? _file;
+  final Player _player = Player(id: 1234);
+
+  double _start = 0.0;
+  double _end = 1.0;
+
+  late Shell _shell;
+
+  final _ffmpegOut = StreamController<List<int>>();
+  final _ffmpegErr = StreamController<List<int>>();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    streamLines(_ffmpegOut.stream).listen((line) {
+      print(line);
+    });
+
+    _shell = Shell(
+        throwOnError: false,
+        verbose: false,
+        stdout: _ffmpegOut.sink,
+        stderr: _ffmpegErr.sink);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,24 +58,79 @@ class App extends StatelessWidget {
         darkTheme: ThemeData.dark(),
         title: "hi",
         home: Scaffold(
-            body: Row(children: const [
-          Expanded(flex: 2, child: Main()),
-          Expanded(flex: 1, child: Sidebar())
+            body: Row(children: [
+          Expanded(
+              flex: 2,
+              child: Main(
+                player: _player,
+                onFile: (XFile file) => _file = file,
+                onChangeRegion: (start, end) {
+                  _start = start;
+                  _end = end;
+                },
+              )),
+          Expanded(
+              flex: 1,
+              child: Sidebar(
+                onExport: (double size) async {
+                  var len = _player.position.duration!.inMicroseconds / 1000000;
+                  var start = _start * len;
+                  var end = _end * len;
+                  var regionLen = (end - start);
+
+                  // note: since we arent reencoding the audio stream, the audio bitrate might not be 128k
+                  var audioBitrate = 128;
+                  var videoBitrate = (size * 8192) / regionLen;
+
+                  var args =
+                      "-hide_banner -progress - -nostats -y -i '${_file!.path}' -ss ${start} -to ${end} -c:v libx264 -b:v ${videoBitrate - audioBitrate}k";
+
+                  _player.stop();
+                  _shell.run(
+                    """
+                    "ffmpeg/ffmpeg.exe" ${args} -pass 1 -vsync cfr -f null NULL
+                    "ffmpeg/ffmpeg.exe" ${args} -pass 2 -c:a copy out.mp4
+                    echo DONE
+                    """,
+                  );
+                  print('DONE');
+                  print('${regionLen} seconds');
+                  print('TARGET SIZE: ${size}M');
+                  print('BITRATE: ${videoBitrate}');
+                  // var proc = ProcessCmd("ffmpeg/ffmpeg.exe", ["-version"]);
+                  // var proc = ProcessCmd("./ffmpeg/ffmpeg.exe", [
+                  //   // "-ss ${(_start * len).round()}us",
+                  //   // "-to ${(_end * len).round()}us",
+                  //   // "-i '${_file!.path}'",
+                  //   // "-c copy",
+                  //   // "out.mp4",
+                  // ]);
+                  // await runCmd(proc, verbose: true);
+                },
+              ))
         ])));
   }
 }
 
 class Main extends StatefulWidget {
-  const Main({Key? key}) : super(key: key);
+  final Player player;
+  final OnChangeRegionFunc onChangeRegion;
+  final void Function(XFile file) onFile;
+
+  const Main(
+      {Key? key,
+      required this.player,
+      required this.onFile,
+      required this.onChangeRegion})
+      : super(key: key);
 
   @override
   State<Main> createState() => _MainState();
 }
 
 class _MainState extends State<Main> {
-  XFile? file;
+  XFile? _file;
   bool _dragging = false;
-  final Player _player = Player(id: 1234);
 
   Offset? offset;
   double _time = 0.0;
@@ -53,8 +144,9 @@ class _MainState extends State<Main> {
     var drop = DropTarget(
         onDragDone: (details) async {
           if (details.files.isEmpty) return;
-          file = details.files.first;
-          _player.open(Media.file(File(details.files.first.path)));
+          _file = details.files.first;
+          widget.onFile(_file!);
+          widget.player.open(Media.file(File(details.files.first.path)));
         },
         onDragUpdated: (details) {
           setState(() {
@@ -82,14 +174,14 @@ class _MainState extends State<Main> {
                         : Colors.transparent),
                 child: const Text("Drop a video here to open."))));
 
-    if (file == null) {
+    if (_file == null) {
       return drop;
     } else {
       return Stack(
         children: [
           drop,
           Video(
-            player: _player,
+            player: widget.player,
             showControls: false,
           )
         ],
@@ -100,14 +192,14 @@ class _MainState extends State<Main> {
   @override
   void initState() {
     super.initState();
-    _player.setVolume(0.5);
-    _player.positionStream.listen((PositionState state) {
+    widget.player.setVolume(0.5);
+    widget.player.positionStream.listen((PositionState state) {
       setState(() {
         _time = state.position!.inMicroseconds.toDouble() /
             state.duration!.inMicroseconds.toDouble();
       });
       if (_time >= _end && !_playAnyway) {
-        _player.pause();
+        widget.player.pause();
       }
     });
   }
@@ -119,7 +211,7 @@ class _MainState extends State<Main> {
         Expanded(flex: 2, child: dropOrVideo(context)),
         Controls(
           onVolume: (volume) {
-            _player.setVolume(volume);
+            widget.player.setVolume(volume);
           },
         ),
         Timeline(
@@ -133,11 +225,12 @@ class _MainState extends State<Main> {
                 _playAnyway = false;
               }
             });
-            _player.seek(Duration(
-                microseconds: (_player.position.duration!.inMicroseconds * time)
-                    .toInt()));
-            if (!_player.playback.isPlaying) {
-              _player.play();
+            widget.player.seek(Duration(
+                microseconds:
+                    (widget.player.position.duration!.inMicroseconds * time)
+                        .toInt()));
+            if (!widget.player.playback.isPlaying) {
+              widget.player.play();
             }
           },
           onChangeRegion: (start, end) {
@@ -145,6 +238,7 @@ class _MainState extends State<Main> {
               _start = start;
               _end = end;
             });
+            widget.onChangeRegion(start, end);
           },
         ),
         Text("start: $_start end: $_end time: $_time"),

@@ -1,0 +1,2 @@
+"ffmpeg/ffmpeg.exe" -y -i X:\\Videos\\incinerators.mp4 -c:v libx264 -b:v 1019k -pass 1 -vsync cfr -f null NULL
+"ffmpeg/ffmpeg.exe" -y -i X:\\Videos\\incinerators.mp4 -c:v libx264 -b:v 1019k -pass 2 -c:a copy out.mp4

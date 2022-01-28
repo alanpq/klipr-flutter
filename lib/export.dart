@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:process_run/cmd_run.dart';
+import 'package:process_run/shell.dart';
+
+import 'dart:io';
 
 class Export extends StatefulWidget {
-  const Export({Key? key}) : super(key: key);
+  final void Function(double size) onExport;
+
+  const Export({Key? key, required this.onExport}) : super(key: key);
 
   @override
   State<Export> createState() => _ExportState();
@@ -10,6 +17,8 @@ class Export extends StatefulWidget {
 class _ExportState extends State<Export> {
   double _size = 8;
   double _other = 0;
+
+  var _shell = Shell();
 
   final GlobalKey _inputKey = GlobalKey();
 
@@ -61,7 +70,12 @@ class _ExportState extends State<Export> {
             ],
           ),
         ),
-      )
+      ),
+      ElevatedButton(
+          onPressed: () async {
+            widget.onExport(_size == -1 ? _other : _size);
+          },
+          child: const Text("Export"))
     ]);
   }
 }

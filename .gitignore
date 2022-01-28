@@ -45,4 +45,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-ffmpeg.exe
+# ffmpeg stuff
+/ffmpeg/
+*.mbtree
+*.mp4

@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:klipr/export.dart';
 
 class Sidebar extends StatelessWidget {
-  const Sidebar({Key? key}) : super(key: key);
+  final void Function(double size) onExport;
+  const Sidebar({Key? key, required this.onExport}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: const [Export()]);
+    return Column(children: [
+      Export(
+        onExport: onExport,
+      )
+    ]);
   }
 }
