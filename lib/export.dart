@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:klipr/ffmpeg.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:process_run/cmd_run.dart';
-import 'package:process_run/shell.dart';
-
-import 'dart:io';
 
 import 'package:provider/provider.dart';
 

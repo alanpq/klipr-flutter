@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:process_run/cmd_run.dart';
 import 'package:process_run/shell.dart';
 
 import 'package:klipr/stream.dart';
