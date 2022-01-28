@@ -8,10 +8,14 @@ import 'package:klipr/ffmpeg.dart';
 import 'package:klipr/sidebar.dart';
 import 'package:klipr/timeline.dart';
 import 'package:cross_file/cross_file.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   DartVLC.initialize();
-  runApp(const App());
+  runApp(ChangeNotifierProvider(
+    create: (context) => FFmpeg(),
+    child: const App(),
+  ));
 }
 
 class App extends StatefulWidget {
@@ -28,13 +32,10 @@ class _AppState extends State<App> {
   double _start = 0.0;
   double _end = 1.0;
 
-  FFmpeg ffmpeg = FFmpeg();
-
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    ffmpeg.init();
   }
 
   @override
@@ -55,17 +56,16 @@ class _AppState extends State<App> {
                 },
               )),
           Expanded(
-              flex: 1,
-              child: Sidebar(
-                onExport: (double size) async {
-                  var len = _player.position.duration!.inMicroseconds / 1000000;
-                  var start = _start * len;
-                  var end = _end * len;
-
-                  _player.stop();
-                  ffmpeg.export(_file!.path, start, end, size, "out.mp4");
-                },
-              ))
+            flex: 1,
+            child: Sidebar(
+              onExport: (double size) async {
+                var ffmpeg = Provider.of<FFmpeg>(context, listen: false);
+                var len = _player.position.duration!.inMicroseconds / 1000000;
+                ffmpeg.export(_file!.path, _start, _end, len, size, "out.mp4");
+                _player.stop();
+              },
+            ),
+          )
         ])));
   }
 }

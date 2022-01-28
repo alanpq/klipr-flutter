@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:klipr/ffmpeg.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:process_run/cmd_run.dart';
 import 'package:process_run/shell.dart';
 
 import 'dart:io';
+
+import 'package:provider/provider.dart';
 
 class Export extends StatefulWidget {
   final void Function(double size) onExport;
@@ -17,8 +20,6 @@ class Export extends StatefulWidget {
 class _ExportState extends State<Export> {
   double _size = 8;
   double _other = 0;
-
-  var _shell = Shell();
 
   final GlobalKey _inputKey = GlobalKey();
 
@@ -71,11 +72,24 @@ class _ExportState extends State<Export> {
           ),
         ),
       ),
-      ElevatedButton(
-          onPressed: () async {
-            widget.onExport(_size == -1 ? _other : _size);
-          },
-          child: const Text("Export"))
+      Consumer<FFmpeg>(
+        builder: (context, ffmpeg, child) {
+          return Column(
+            children: [
+              ElevatedButton(
+                  onPressed: () async {
+                    if (ffmpeg.isRunning) {
+                      ffmpeg.cancel();
+                    } else {
+                      widget.onExport(_size == -1 ? _other : _size);
+                    }
+                  },
+                  child: Text(ffmpeg.isRunning ? "Cancel" : "Export")),
+              LinearProgressIndicator(value: ffmpeg.progress),
+            ],
+          );
+        },
+      )
     ]);
   }
 }
