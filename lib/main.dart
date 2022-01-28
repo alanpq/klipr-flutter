@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dart_vlc/dart_vlc.dart';
 import 'package:desktop_drop/desktop_drop.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:klipr/controls.dart';
 import 'package:klipr/ffmpeg.dart';
@@ -61,8 +62,16 @@ class _AppState extends State<App> {
               onExport: (double size) async {
                 var ffmpeg = Provider.of<FFmpeg>(context, listen: false);
                 var len = _player.position.duration!.inMicroseconds / 1000000;
-                ffmpeg.export(_file!.path, _start, _end, len, size, "out.mp4");
-                _player.stop();
+                String? res = await FilePicker.platform.saveFile(
+                  dialogTitle: "Export as",
+                  allowedExtensions: [".mp4"],
+                  type: FileType.video,
+                  fileName: _file!.name,
+                );
+                if (res != null) {
+                  _player.stop();
+                  ffmpeg.export(_file!.path, _start, _end, len, size, res);
+                }
               },
             ),
           )
