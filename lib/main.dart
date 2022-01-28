@@ -1,16 +1,13 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:dart_vlc/dart_vlc.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:klipr/controls.dart';
+import 'package:klipr/ffmpeg.dart';
 import 'package:klipr/sidebar.dart';
-import 'package:klipr/stream.dart';
 import 'package:klipr/timeline.dart';
 import 'package:cross_file/cross_file.dart';
-import 'package:process_run/cmd_run.dart';
-import 'package:process_run/shell.dart';
 
 void main() {
   DartVLC.initialize();
@@ -31,25 +28,13 @@ class _AppState extends State<App> {
   double _start = 0.0;
   double _end = 1.0;
 
-  late Shell _shell;
-
-  final _ffmpegOut = StreamController<List<int>>();
-  final _ffmpegErr = StreamController<List<int>>();
+  FFmpeg ffmpeg = FFmpeg();
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-
-    streamLines(_ffmpegOut.stream).listen((line) {
-      print(line);
-    });
-
-    _shell = Shell(
-        throwOnError: false,
-        verbose: false,
-        stdout: _ffmpegOut.sink,
-        stderr: _ffmpegErr.sink);
+    ffmpeg.init();
   }
 
   @override
@@ -76,36 +61,9 @@ class _AppState extends State<App> {
                   var len = _player.position.duration!.inMicroseconds / 1000000;
                   var start = _start * len;
                   var end = _end * len;
-                  var regionLen = (end - start);
-
-                  // note: since we arent reencoding the audio stream, the audio bitrate might not be 128k
-                  var audioBitrate = 128;
-                  var videoBitrate = (size * 8192) / regionLen;
-
-                  var args =
-                      "-hide_banner -progress - -nostats -y -i '${_file!.path}' -ss ${start} -to ${end} -c:v libx264 -b:v ${videoBitrate - audioBitrate}k";
 
                   _player.stop();
-                  _shell.run(
-                    """
-                    "ffmpeg/ffmpeg.exe" ${args} -pass 1 -vsync cfr -f null NULL
-                    "ffmpeg/ffmpeg.exe" ${args} -pass 2 -c:a copy out.mp4
-                    echo DONE
-                    """,
-                  );
-                  print('DONE');
-                  print('${regionLen} seconds');
-                  print('TARGET SIZE: ${size}M');
-                  print('BITRATE: ${videoBitrate}');
-                  // var proc = ProcessCmd("ffmpeg/ffmpeg.exe", ["-version"]);
-                  // var proc = ProcessCmd("./ffmpeg/ffmpeg.exe", [
-                  //   // "-ss ${(_start * len).round()}us",
-                  //   // "-to ${(_end * len).round()}us",
-                  //   // "-i '${_file!.path}'",
-                  //   // "-c copy",
-                  //   // "out.mp4",
-                  // ]);
-                  // await runCmd(proc, verbose: true);
+                  ffmpeg.export(_file!.path, start, end, size, "out.mp4");
                 },
               ))
         ])));
