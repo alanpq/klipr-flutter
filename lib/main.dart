@@ -5,7 +5,9 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:klipr/controls.dart';
+import 'package:klipr/models/clip_region.dart';
 import 'package:klipr/models/ffmpeg.dart';
+import 'package:klipr/models/video.dart';
 import 'package:klipr/sidebar.dart';
 import 'package:klipr/timeline.dart';
 import 'package:cross_file/cross_file.dart';
@@ -13,8 +15,12 @@ import 'package:provider/provider.dart';
 
 void main() {
   DartVLC.initialize();
-  runApp(ChangeNotifierProvider(
-    create: (context) => FFmpeg(),
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (context) => FFmpeg()),
+      ChangeNotifierProvider(create: (context) => VideoModel()),
+      ChangeNotifierProvider(create: (context) => ClipRegionModel()),
+    ],
     child: const App(),
   ));
 }
@@ -27,12 +33,6 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  XFile? _file;
-  final Player _player = Player(id: 1234);
-
-  double _start = 0.0;
-  double _end = 1.0;
-
   @override
   void initState() {
     // TODO: implement initState
@@ -46,22 +46,15 @@ class _AppState extends State<App> {
         title: "hi",
         home: Scaffold(
             body: Row(children: [
-          Expanded(
-              flex: 2,
-              child: Main(
-                player: _player,
-                onFile: (XFile file) => _file = file,
-                onChangeRegion: (start, end) {
-                  _start = start;
-                  _end = end;
-                },
-              )),
+          const Expanded(flex: 2, child: Main()),
           Expanded(
             flex: 1,
             child: Sidebar(
               onExport: (double size) async {
                 var ffmpeg = Provider.of<FFmpeg>(context, listen: false);
-                var len = _player.position.duration!.inMicroseconds / 1000000;
+                var video = Provider.of<VideoModel>(context, listen: false);
+                var region =
+                    Provider.of<ClipRegionModel>(context, listen: false);
                 String? res = await FilePicker.platform.saveFile(
                   dialogTitle: "Export as",
                   type: FileType.custom,
@@ -75,8 +68,9 @@ class _AppState extends State<App> {
                     split.add("mp4");
                     res = split.join(".");
                   }
-                  _player.stop();
-                  ffmpeg.export(_file!.path, _start, _end, len, size, res);
+                  video.player.stop();
+                  ffmpeg.export(video.path!, region.start, region.end,
+                      video.duration, size, res);
                 }
               },
             ),
@@ -86,16 +80,7 @@ class _AppState extends State<App> {
 }
 
 class Main extends StatefulWidget {
-  final Player player;
-  final OnChangeRegionFunc onChangeRegion;
-  final void Function(XFile file) onFile;
-
-  const Main(
-      {Key? key,
-      required this.player,
-      required this.onFile,
-      required this.onChangeRegion})
-      : super(key: key);
+  const Main({Key? key}) : super(key: key);
 
   @override
   State<Main> createState() => _MainState();
@@ -106,20 +91,14 @@ class _MainState extends State<Main> {
   bool _dragging = false;
 
   Offset? offset;
-  double _time = 0.0;
 
-  double _start = 0.0;
-  double _end = 1.0;
-
-  bool _playAnyway = false;
-
-  Widget dropOrVideo(BuildContext context) {
+  Widget dropOrVideo(BuildContext context, VideoModel video) {
     var drop = DropTarget(
         onDragDone: (details) async {
           if (details.files.isEmpty) return;
           _file = details.files.first;
-          widget.onFile(_file!);
-          widget.player.open(Media.file(File(details.files.first.path)));
+
+          video.open(File(details.files.first.path));
         },
         onDragUpdated: (details) {
           setState(() {
@@ -154,7 +133,7 @@ class _MainState extends State<Main> {
         children: [
           drop,
           Video(
-            player: widget.player,
+            player: video.player,
             showControls: false,
           )
         ],
@@ -165,56 +144,25 @@ class _MainState extends State<Main> {
   @override
   void initState() {
     super.initState();
-    widget.player.setVolume(0.5);
-    widget.player.positionStream.listen((PositionState state) {
-      setState(() {
-        _time = state.position!.inMicroseconds.toDouble() /
-            state.duration!.inMicroseconds.toDouble();
-      });
-      if (_time >= _end && !_playAnyway) {
-        widget.player.pause();
-      }
-    });
+    var video = Provider.of<VideoModel>(context, listen: false);
+    video.player.setVolume(0.5);
   }
 
   @override
   Widget build(BuildContext context) {
+    var video = Provider.of<VideoModel>(context, listen: false);
     return Column(
       children: [
-        Expanded(flex: 2, child: dropOrVideo(context)),
+        Expanded(flex: 2, child: dropOrVideo(context, video)),
         Controls(
           onVolume: (volume) {
-            widget.player.setVolume(volume);
+            video.player.setVolume(volume);
           },
         ),
         Timeline(
-          externTime: _time,
-          onScrub: (time) {
-            setState(() {
-              _time = time;
-              if (_time > _end) {
-                _playAnyway = true;
-              } else {
-                _playAnyway = false;
-              }
-            });
-            widget.player.seek(Duration(
-                microseconds:
-                    (widget.player.position.duration!.inMicroseconds * time)
-                        .toInt()));
-            if (!widget.player.playback.isPlaying) {
-              widget.player.play();
-            }
-          },
-          onChangeRegion: (start, end) {
-            setState(() {
-              _start = start;
-              _end = end;
-            });
-            widget.onChangeRegion(start, end);
-          },
+          externTime: video.completion,
+          onScrub: (time) {},
         ),
-        Text("start: $_start end: $_end time: $_time"),
       ],
     );
   }

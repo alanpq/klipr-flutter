@@ -16,6 +16,7 @@ class FFmpeg extends ChangeNotifier {
 
   int pass = 0;
   int frameCount = 0;
+  double _effectiveFrameCount = 0;
   double progress = 0.0;
   bool isRunning = false;
 
@@ -50,18 +51,23 @@ class FFmpeg extends ChangeNotifier {
             }
             break;
           case "frame":
+            var eFrame = int.parse(value) + _effectiveFrameCount * pass;
             if (kDebugMode) {
-              print("got frame=$value, out of $frameCount frames");
+              print(line);
+              print(
+                  "got frame=$value (aka $eFrame), out of ${_effectiveFrameCount * 2} effective frames");
             }
-            progress = (int.parse(value) + frameCount * pass) /
-                (frameCount * 2 * _ratio); // * 2 because 2-pass export
+            progress = eFrame /
+                (_effectiveFrameCount * 2); // * 2 because 2-pass export
             break;
         }
       } else {
         if (line.startsWith("FRAMES:")) {
           frameCount = int.parse(line.substring(7));
+          _effectiveFrameCount = frameCount * _ratio;
           if (kDebugMode) {
-            print("$frameCount frames");
+            print(
+                "$frameCount frames @ ratio $_ratio -> $_effectiveFrameCount effective frames");
           }
         } else if (kDebugMode) {
           print("[IN] $line");
@@ -104,8 +110,8 @@ class FFmpeg extends ChangeNotifier {
     var endS = end * duration;
     var regionLen = (endS - startS);
 
-    countFrames(input);
     _ratio = end - start;
+    countFrames(input);
 
     // note: since we arent reencoding the audio stream, the audio bitrate might not be 128k
     var audioBitrate = 128;
@@ -131,16 +137,24 @@ class FFmpeg extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _kill() {
+    try {
+      _shell.kill(ProcessSignal.sigkill);
+    } catch (e) {
+      print('error while killing: $e');
+    }
+  }
+
   void cancel() {
-    while (_shell.kill()) {}
     isRunning = false;
     progress = 0.0;
     notifyListeners();
+    _kill();
   }
 
   @override
   void dispose() {
     super.dispose();
-    while (_shell.kill()) {}
+    _kill();
   }
 }

@@ -76,7 +76,7 @@ class _ExportState extends State<Export> {
                 Padding(
                   padding: const EdgeInsets.all(5.0),
                   child: ElevatedButton(
-                      onPressed: () async {
+                      onPressed: () {
                         if (ffmpeg.isRunning) {
                           ffmpeg.cancel();
                         } else {

@@ -1,4 +1,9 @@
+import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter/material.dart';
+import 'package:klipr/models/clip_region.dart';
+import 'package:provider/provider.dart';
+
+import 'models/video.dart';
 
 class Timeline extends StatefulWidget {
   final OnScrubFunc? onScrub;
@@ -23,28 +28,57 @@ class _TimelineState extends State<Timeline> {
   var curPos = 0.0;
   var curPosOffset = 0.0;
 
+  bool _playAnyway = false;
+
   final _timelineKey = GlobalKey();
 
-  void _mouseUpdate(PointerEvent e) {
+  void onScrub(double time, VideoModel video, ClipRegionModel region) {
+    video.seekPercentage(time);
+    if (!video.player.playback.isPlaying) {
+      video.play();
+    }
+
+    if (video.completion > region.end) {
+      _playAnyway = true;
+    } else {
+      _playAnyway = false;
+    }
+
+    if (widget.onScrub != null) {
+      widget.onScrub!(time);
+    }
+  }
+
+  void _mouseUpdate(PointerEvent e, VideoModel video, ClipRegionModel region) {
     setState(() {
       var w = _timelineKey.currentContext!.size!.width;
       curPos = (e.localPosition.dx / (w - 10)).clamp(0, 1);
       curPosOffset = curPos * (w - 50);
       // curPosOffset -= 5;
     });
-    if (widget.onScrub != null) {
-      widget.onScrub!(curPos);
-    }
+    onScrub(curPos, video, region);
   }
 
   @override
   void initState() {
     super.initState();
     curPos = widget.externTime;
+
+    var video = Provider.of<VideoModel>(context, listen: false);
+    var region = Provider.of<ClipRegionModel>(context, listen: false);
+    video.player.positionStream.listen((PositionState state) {
+      if (video.completion >= region.end && !_playAnyway) {
+        video.seekPercentage(region.end);
+        video.pause();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    var video = context.watch<VideoModel>();
+    var region = context.watch<ClipRegionModel>();
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
       child: SizedBox(
@@ -53,9 +87,9 @@ class _TimelineState extends State<Timeline> {
             key: _timelineKey,
             cursor: SystemMouseCursors.click,
             child: Listener(
-              onPointerDown: _mouseUpdate,
-              onPointerUp: _mouseUpdate,
-              onPointerMove: _mouseUpdate,
+              onPointerDown: (e) => {_mouseUpdate(e, video, region)},
+              onPointerUp: (e) => {_mouseUpdate(e, video, region)},
+              onPointerMove: (e) => {_mouseUpdate(e, video, region)},
               child: Stack(
                 children: [
                   Padding(
@@ -70,30 +104,25 @@ class _TimelineState extends State<Timeline> {
                   _ClipRegion(
                       timelineKey: _timelineKey,
                       onChangeRegion: (start, end) {
+                        region.setRegion(start, end);
                         if (widget.onChangeRegion != null) {
                           widget.onChangeRegion!(start, end);
                         }
                       },
                       onScrub: (time) {
-                        // setState(() {
-                        //   curPos = time;
-                        //   curPosOffset =
-                        //       curPos * _timelineKey.currentContext!.size!.width - 5;
-                        // });
-                        if (widget.onScrub != null) {
-                          widget.onScrub!(time);
-                        }
+                        onScrub(time, video, region);
                       }),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 5),
                     child: FractionallySizedBox(
-                      widthFactor: widget.externTime.clamp(0, 1),
+                      widthFactor: video.completion.clamp(0, 1),
                       child: Align(
                           heightFactor: 1,
                           alignment: Alignment.topRight,
                           child: ticker),
                     ),
                   ),
+                  Text("${video.completion} (${region.start} - ${region.end}"),
                 ],
               ),
             )),
