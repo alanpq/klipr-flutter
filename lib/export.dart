@@ -67,11 +67,15 @@ class _ExportState extends State<Export> {
           ),
         ),
       ),
-      Consumer<FFmpeg>(
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: Consumer<FFmpeg>(
         builder: (context, ffmpeg, child) {
           return Column(
             children: [
-              ElevatedButton(
+                Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: ElevatedButton(
                   onPressed: () async {
                     if (ffmpeg.isRunning) {
                       ffmpeg.cancel();
@@ -80,10 +84,12 @@ class _ExportState extends State<Export> {
                     }
                   },
                   child: Text(ffmpeg.isRunning ? "Cancel" : "Export")),
+                ),
               LinearProgressIndicator(value: ffmpeg.progress),
             ],
           );
         },
+        ),
       )
     ]);
   }
