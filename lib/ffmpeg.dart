@@ -63,8 +63,8 @@ class FFmpeg extends ChangeNotifier {
           if (kDebugMode) {
             print("$frameCount frames");
           }
-        } else {
-          print(line);
+        } else if (kDebugMode) {
+          print("[IN] $line");
         }
       }
       notifyListeners();
@@ -110,6 +110,12 @@ class FFmpeg extends ChangeNotifier {
     // note: since we arent reencoding the audio stream, the audio bitrate might not be 128k
     var audioBitrate = 128;
     var videoBitrate = (size * 8192) / regionLen;
+
+    if (kDebugMode) {
+      print("video duration: $duration");
+      print("$startS secs -> $endS secs ($start->$end)");
+      print("region size: $regionLen seconds ($_ratio)");
+    }
 
     var args =
         "-hide_banner -progress - -nostats -y -i '${join(input)}' -ss $startS -to $endS -c:v libx264 -b:v ${videoBitrate - audioBitrate}k";
