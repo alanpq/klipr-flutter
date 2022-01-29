@@ -64,11 +64,17 @@ class _AppState extends State<App> {
                 var len = _player.position.duration!.inMicroseconds / 1000000;
                 String? res = await FilePicker.platform.saveFile(
                   dialogTitle: "Export as",
+                  type: FileType.custom,
                   allowedExtensions: [".mp4"],
-                  type: FileType.video,
-                  fileName: _file!.name,
+                  lockParentWindow: true,
+                  // fileName: _file!.name,
                 );
                 if (res != null) {
+                  var split = res.split(".");
+                  if (split.length == 1 || split.last != "mp4") {
+                    split.add("mp4");
+                    res = split.join(".");
+                  }
                   _player.stop();
                   ffmpeg.export(_file!.path, _start, _end, len, size, res);
                 }
