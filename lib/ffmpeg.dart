@@ -63,13 +63,15 @@ class FFmpeg extends ChangeNotifier {
           if (kDebugMode) {
             print("$frameCount frames");
           }
+        } else {
+          print(line);
         }
       }
       notifyListeners();
     });
-    // streamLines(_ffmpegErr.stream).listen((line) {
-    //   print(line);
-    // });
+    streamLines(_ffmpegErr.stream).listen((line) {
+      print(line);
+    });
 
     _shell = Shell(
         throwOnError: false,
@@ -113,8 +115,8 @@ class FFmpeg extends ChangeNotifier {
         "-hide_banner -progress - -nostats -y -i '${join(input)}' -ss $startS -to $endS -c:v libx264 -b:v ${videoBitrate - audioBitrate}k";
     _shell.run(
       """
-      '$_ffprobe' $args -pass 1 -vsync cfr -f null NULL
-      '$_ffprobe' $args -pass 2 -c:a copy '${join(output)}'
+      '$_ffmpeg' $args -pass 1 -vsync cfr -f null NULL
+      '$_ffmpeg' $args -pass 2 -c:a copy '$output'
       """,
     );
 

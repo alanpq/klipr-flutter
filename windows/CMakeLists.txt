@@ -93,3 +93,9 @@ install(DIRECTORY "${PROJECT_BUILD_DIR}/${FLUTTER_ASSET_DIR_NAME}"
 install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   CONFIGURATIONS Profile;Release
   COMPONENT Runtime)
+
+include(CMakePrintHelpers)
+cmake_print_variables(ORIGIN)
+cmake_print_variables(BUILD_BUNDLE_DIR)
+# CUSTOM: Copy the ffmpeg binaries on each build
+install(DIRECTORY "${ORIGIN}ffmpeg" DESTINATION "${BUILD_BUNDLE_DIR}" COMPONENT Runtime)
