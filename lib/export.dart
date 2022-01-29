@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:klipr/ffmpeg.dart';
+import 'package:klipr/models/ffmpeg.dart';
 
 import 'package:provider/provider.dart';
 
@@ -70,25 +70,25 @@ class _ExportState extends State<Export> {
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Consumer<FFmpeg>(
-        builder: (context, ffmpeg, child) {
-          return Column(
-            children: [
+          builder: (context, ffmpeg, child) {
+            return Column(
+              children: [
                 Padding(
                   padding: const EdgeInsets.all(5.0),
                   child: ElevatedButton(
-                  onPressed: () async {
-                    if (ffmpeg.isRunning) {
-                      ffmpeg.cancel();
-                    } else {
-                      widget.onExport(_size == -1 ? _other : _size);
-                    }
-                  },
-                  child: Text(ffmpeg.isRunning ? "Cancel" : "Export")),
+                      onPressed: () async {
+                        if (ffmpeg.isRunning) {
+                          ffmpeg.cancel();
+                        } else {
+                          widget.onExport(_size == -1 ? _other : _size);
+                        }
+                      },
+                      child: Text(ffmpeg.isRunning ? "Cancel" : "Export")),
                 ),
-              LinearProgressIndicator(value: ffmpeg.progress),
-            ],
-          );
-        },
+                LinearProgressIndicator(value: ffmpeg.progress),
+              ],
+            );
+          },
         ),
       )
     ]);

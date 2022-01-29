@@ -5,7 +5,7 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:klipr/controls.dart';
-import 'package:klipr/ffmpeg.dart';
+import 'package:klipr/models/ffmpeg.dart';
 import 'package:klipr/sidebar.dart';
 import 'package:klipr/timeline.dart';
 import 'package:cross_file/cross_file.dart';
