@@ -109,9 +109,10 @@ class FFmpeg extends ChangeNotifier {
   /// `size` is in MB.
   ///
   /// `output` is the path to save the export to.
-  void export(String input, double start, double end, double duration,
+  bool export(String input, double start, double end, double duration,
       double size, String output) {
     error.clear();
+    if (duration == 0) return false;
     var startS = start * duration;
     var endS = end * duration;
     var regionLen = (endS - startS);
@@ -147,6 +148,8 @@ class FFmpeg extends ChangeNotifier {
     isRunning = true;
     pass = 0;
     notifyListeners();
+
+    return true;
   }
 
   void _kill() {
