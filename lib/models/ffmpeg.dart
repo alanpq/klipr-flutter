@@ -157,7 +157,7 @@ class FFmpeg extends ChangeNotifier {
 
   void _kill() {
     try {
-      _shell.kill(ProcessSignal.sigkill);
+      _shell.kill(ProcessSignal.sigint);
     } catch (e) {
       print('error while killing: $e');
     }
