@@ -4,6 +4,8 @@ import 'package:klipr/models/ffmpeg.dart';
 
 import 'package:provider/provider.dart';
 
+import 'models/video.dart';
+
 class Export extends StatefulWidget {
   final void Function(double size) onExport;
 
@@ -38,6 +40,7 @@ class _ExportState extends State<Export> {
 
   @override
   Widget build(BuildContext context) {
+    var video = Provider.of<VideoModel>(context, listen: true);
     return Column(children: [
       sizeTile(8),
       sizeTile(50),
@@ -66,8 +69,10 @@ class _ExportState extends State<Export> {
                   key: _inputKey,
                   enabled: _size == -1,
                   onTap: () => _onChanged(-1),
-                  onSubmitted: (val) {
-                    _other = double.parse(val);
+                  onChanged: (val) {
+                    setState(() {
+                      _other = double.parse(val);
+                    });
                   },
                   decoration:
                       const InputDecoration(hintText: "Enter size (MB)"),
@@ -86,13 +91,15 @@ class _ExportState extends State<Export> {
                 Padding(
                   padding: const EdgeInsets.all(5.0),
                   child: ElevatedButton(
-                      onPressed: () {
-                        if (ffmpeg.isRunning) {
-                          ffmpeg.cancel();
-                        } else {
-                          widget.onExport(_size == -1 ? _other : _size);
-                        }
-                      },
+                      onPressed: video.path == null
+                          ? null
+                          : () {
+                              if (ffmpeg.isRunning) {
+                                ffmpeg.cancel();
+                              } else {
+                                widget.onExport(_size == -1 ? _other : _size);
+                              }
+                            },
                       child: Text(ffmpeg.isRunning ? "Cancel" : "Export")),
                 ),
                 LinearProgressIndicator(value: ffmpeg.progress),
