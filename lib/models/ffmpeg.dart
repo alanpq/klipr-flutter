@@ -56,11 +56,11 @@ class FFmpeg extends ChangeNotifier {
             break;
           case "frame":
             var eFrame = int.parse(value) + _effectiveFrameCount * pass;
-            if (kDebugMode) {
-              print(line);
-              print(
-                  "got frame=$value (aka $eFrame), out of ${_effectiveFrameCount * 2} effective frames");
-            }
+            // if (kDebugMode) {
+            //   print(line);
+            //   print(
+            //       "got frame=$value (aka $eFrame), out of ${_effectiveFrameCount * 2} effective frames");
+            // }
             progress = eFrame /
                 (_effectiveFrameCount * 2); // * 2 because 2-pass export
             break;
@@ -80,8 +80,11 @@ class FFmpeg extends ChangeNotifier {
       notifyListeners();
     });
     streamLines(_ffmpegErr.stream).listen((line) {
-      isError = true;
-      error.add(line);
+      var split = line.split("=");
+      if (split.length != 2) {
+        isError = true;
+        error.add(line);
+      }
     });
 
     _shell = Shell(
@@ -137,7 +140,7 @@ class FFmpeg extends ChangeNotifier {
     // }
 
     var args =
-        "-hide_banner -progress - -nostats -y -i '${join(input)}' -ss $startS -to $endS -c:v libx264 -b:v ${videoBitrate - audioBitrate}k";
+        "-hide_banner -progress pipe:1 -nostats -y -i '${join(input)}' -ss $startS -to $endS -c:v libx264 -b:v ${videoBitrate - audioBitrate}k";
     _shell.run(
       """
       '$_ffmpeg' $args -pass 1 -vsync cfr -f null NULL
