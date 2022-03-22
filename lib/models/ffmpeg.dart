@@ -14,11 +14,14 @@ class FFmpeg extends ChangeNotifier {
   late String _ffmpeg;
   late String _ffprobe;
 
+  List<String> error = [];
+
   int pass = 0;
   int frameCount = 0;
   double _effectiveFrameCount = 0;
   double progress = 0.0;
   bool isRunning = false;
+  bool isError = false;
 
   double _ratio = 1.0;
   late Shell _shell;
@@ -35,6 +38,7 @@ class FFmpeg extends ChangeNotifier {
     }
 
     streamLines(_ffmpegOut.stream).listen((line) {
+      error.add(line);
       var split = line.split("=");
       if (split.length == 2) {
         var key = split[0];
@@ -76,7 +80,8 @@ class FFmpeg extends ChangeNotifier {
       notifyListeners();
     });
     streamLines(_ffmpegErr.stream).listen((line) {
-      print(line);
+      isError = true;
+      error.add(line);
     });
 
     _shell = Shell(
@@ -106,6 +111,7 @@ class FFmpeg extends ChangeNotifier {
   /// `output` is the path to save the export to.
   void export(String input, double start, double end, double duration,
       double size, String output) {
+    error.clear();
     var startS = start * duration;
     var endS = end * duration;
     var regionLen = (endS - startS);

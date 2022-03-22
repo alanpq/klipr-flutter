@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:klipr/export.dart';
+import 'package:klipr/logs.dart';
 
 class Sidebar extends StatelessWidget {
   final void Function(double size) onExport;
@@ -10,7 +11,8 @@ class Sidebar extends StatelessWidget {
     return Column(children: [
       Export(
         onExport: onExport,
-      )
+      ),
+      const Logs(),
     ]);
   }
 }
