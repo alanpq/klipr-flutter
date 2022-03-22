@@ -97,7 +97,7 @@ class _TimelineState extends State<Timeline> {
                     child: Container(
                       height: _height,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF2929FF),
+                        color: Color(0x2F000000),
                       ),
                     ),
                   ),
@@ -122,7 +122,7 @@ class _TimelineState extends State<Timeline> {
                           child: ticker),
                     ),
                   ),
-                  Text("${video.completion} (${region.start} - ${region.end}"),
+                  // Text("${video.completion} (${region.start} - ${region.end}"),
                 ],
               ),
             )),
@@ -139,7 +139,7 @@ Widget ticker = IgnorePointer(
             height: _height,
             decoration: const BoxDecoration(color: Colors.white))));
 
-const green = Color(0xFF3AF13A);
+const green = Color(0xFF3AD6F1);
 const radius = Radius.circular(5);
 
 class _ClipRegion extends StatefulWidget {
@@ -163,7 +163,7 @@ class _ClipRegionState extends State<_ClipRegion> {
   var _right = double.infinity;
 
   var _start = 0.0;
-  var _end = 0.5;
+  var _end = 1.0;
 
   void _pointerUp(e) {
     _held = "";
