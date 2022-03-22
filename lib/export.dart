@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:klipr/models/ffmpeg.dart';
 
 import 'package:provider/provider.dart';
@@ -57,11 +58,20 @@ class _ExportState extends State<Export> {
                 onChanged: _onChanged,
               ),
               Expanded(
-                  child: TextField(
-                key: _inputKey,
-                enabled: _size == -1,
-                onTap: () => _onChanged(-1),
-                decoration: const InputDecoration(hintText: "Enter size (MB)"),
+                  child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  key: _inputKey,
+                  enabled: _size == -1,
+                  onTap: () => _onChanged(-1),
+                  onSubmitted: (val) {
+                    _other = double.parse(val);
+                  },
+                  decoration:
+                      const InputDecoration(hintText: "Enter size (MB)"),
+                ),
               )),
             ],
           ),
