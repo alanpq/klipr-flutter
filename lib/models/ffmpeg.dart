@@ -123,11 +123,17 @@ class FFmpeg extends ChangeNotifier {
     var audioBitrate = 128;
     var videoBitrate = (size * 8192) / regionLen;
 
-    if (kDebugMode) {
-      print("video duration: $duration");
-      print("$startS secs -> $endS secs ($start->$end)");
-      print("region size: $regionLen seconds ($_ratio)");
-    }
+    // if (kDebugMode) {
+    error.add('================');
+    error.add("region length: $regionLen seconds (ratio: $_ratio)");
+    error.add("$startS secs -> $endS secs ($start->$end)");
+    error.add("duration: $duration");
+    error.add("");
+    error.add("audio bitrate: $audioBitrate");
+    error.add("video bitrate: $videoBitrate");
+    error.add("target size: $size");
+    error.add('================');
+    // }
 
     var args =
         "-hide_banner -progress - -nostats -y -i '${join(input)}' -ss $startS -to $endS -c:v libx264 -b:v ${videoBitrate - audioBitrate}k";
