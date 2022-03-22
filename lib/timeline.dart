@@ -160,7 +160,7 @@ class _ClipRegionState extends State<_ClipRegion> {
   var _held = "";
 
   var _left = 0.0;
-  var _right = 30.0;
+  var _right = double.infinity;
 
   var _start = 0.0;
   var _end = 0.5;
